@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conversor kg → peças</title>
+<style>
+  :root{
+    --steel-900:#1a1d21;--steel-800:#23272d;--steel-700:#2e333a;--steel-600:#3b424b;
+    --line:#454c56;--text:#e8eaed;--muted:#9aa3ad;--accent:#f5a623;--accent-dim:#c8851a;--radius:10px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--steel-900);color:var(--text);min-height:100vh;padding:24px 16px 60px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:640px;margin:0 auto}
+  header{margin-bottom:24px}
+  h1{font-size:1.45rem;font-weight:700;letter-spacing:-.02em;display:flex;align-items:center;gap:10px}
+  h1 .bar{display:inline-block;width:6px;height:26px;background:var(--accent);border-radius:2px}
+  header p{color:var(--muted);font-size:.9rem;margin-top:6px;margin-left:16px}
+
+  .card{background:var(--steel-800);border:1px solid var(--line);border-radius:var(--radius);padding:20px;margin-bottom:18px}
+  label{display:block;font-size:.8rem;color:var(--muted);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+
+  select,input{width:100%;background:var(--steel-700);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:12px 14px;font-size:1rem;outline:none;transition:border-color .15s}
+  select:focus,input:focus{border-color:var(--accent)}
+  .field{margin-bottom:16px}
+
+  .qty-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end}
+  .units{display:flex;background:var(--steel-700);border:1px solid var(--line);border-radius:8px;overflow:hidden;height:46px}
+  .units button{background:none;border:none;color:var(--muted);font-weight:700;font-size:.9rem;padding:0 14px;cursor:pointer;transition:.15s;border-right:1px solid var(--line)}
+  .units button:last-child{border-right:none}
+  .units button.on{background:var(--accent);color:#1a1d21}
+
+  .result{background:var(--steel-700);border:1px dashed var(--line);border-radius:8px;padding:18px;text-align:center;margin-top:16px}
+  .result .big{font-size:2.6rem;font-weight:800;color:var(--accent);line-height:1}
+  .result .big span{font-size:1rem;font-weight:600;color:var(--muted);margin-left:6px}
+  .result .sub{color:var(--muted);font-size:.85rem;margin-top:8px;line-height:1.5}
+  .result.empty .big{color:var(--steel-600)}
+
+  .selected{font-size:.9rem;color:var(--text);background:var(--steel-700);border:1px solid var(--line);border-radius:8px;padding:12px 14px;line-height:1.3}
+  .selected .none{color:var(--muted)}
+  .selected b{color:var(--accent)}
+
+  h2{font-size:.95rem;font-weight:700;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+  h2 .count{font-size:.75rem;color:var(--muted);font-weight:500}
+
+  .search{margin-bottom:12px;position:relative}
+  .search input{padding-left:38px}
+  .search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;stroke:var(--muted);fill:none;stroke-width:2}
+
+  .mat-scroll{max-height:340px;overflow-y:auto;margin:0 -4px}
+  .mat-row{display:flex;align-items:center;gap:8px;padding:11px 8px;border-radius:8px;border-bottom:1px solid var(--steel-700);font-size:.85rem;cursor:pointer;transition:.12s}
+  .mat-row:hover{background:var(--steel-700)}
+  .mat-row.sel{background:rgba(245,166,35,.12);border-bottom-color:transparent}
+  .mat-row .name{flex:1;line-height:1.3}
+  .mat-row .meta{color:var(--accent);font-weight:600;white-space:nowrap;font-size:.8rem}
+  .mat-row .meta small{color:var(--muted);font-weight:500;display:block;text-align:right}
+  .mat-row .acts{display:flex;gap:2px}
+  .mat-row .acts button{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:4px 7px;border-radius:6px;line-height:1}
+  .mat-row .acts .edit:hover{color:var(--accent);background:var(--steel-600)}
+  .mat-row .acts .del:hover{color:#ff6b6b;background:var(--steel-600)}
+
+  .add-box{margin-top:16px;padding-top:16px;border-top:1px solid var(--steel-700)}
+  .add-box.editing{background:rgba(245,166,35,.06);margin:16px -8px 0;padding:16px 8px;border-radius:8px;border-top:none}
+  .add-title{font-size:.8rem;font-weight:700;margin-bottom:10px;color:var(--text)}
+  .add-grid{display:grid;grid-template-columns:1fr;gap:10px}
+  .add-grid .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .btn{background:var(--accent);color:#1a1d21;border:none;border-radius:8px;padding:12px 16px;font-size:.95rem;font-weight:700;cursor:pointer;width:100%;transition:background .15s}
+  .btn:hover{background:var(--accent-dim)}
+  .btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+  .btn.ghost:hover{background:rgba(245,166,35,.1)}
+  .hint{font-size:.75rem;color:var(--muted);margin-top:10px}
+  .hint a{color:var(--muted)}
+  .cancel-link{display:inline-block;margin-top:8px;font-size:.8rem;color:var(--muted);cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><span class="bar"></span>Conversor kg → peças</h1>
+    <p>Escolha o material, informe a quantidade (kg, t ou metros) e veja quantas peças correspondem.</p>
+  </header>
+
+  <div class="card">
+    <div class="field">
+      <label>Material selecionado</label>
+      <div id="selected" class="selected"><span class="none">Nenhum — escolha na lista abaixo</span></div>
+    </div>
+    <div class="field" style="margin-bottom:0">
+      <label>Quantidade</label>
+      <div class="qty-row">
+        <input id="qty" type="text" inputmode="decimal" placeholder="Ex: 1000,5" oninput="calc()">
+        <div class="units" id="units">
+          <button class="on" data-u="kg" onclick="setUnit('kg')">kg</button>
+          <button data-u="t" onclick="setUnit('t')">t</button>
+          <button data-u="mts" onclick="setUnit('mts')">mts</button>
+        </div>
+      </div>
+    </div>
+    <div id="result" class="result empty">
+      <div class="big">—</div>
+      <div class="sub">Selecione um material e informe a quantidade</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Materiais <span class="count" id="matCount"></span></h2>
+    <div class="search">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="search" type="text" placeholder="Pesquisar material..." oninput="render()">
+    </div>
+    <div class="mat-scroll"><div id="matList"></div></div>
+
+    <div class="add-box" id="addBox">
+      <div class="add-title" id="addTitle">Adicionar material</div>
+      <div class="add-grid">
+        <input id="fName" type="text" placeholder="Nome do material">
+        <div class="two">
+          <input id="fWeight" type="text" inputmode="decimal" placeholder="Peso/peça (kg)">
+          <input id="fLen" type="text" inputmode="decimal" placeholder="Comprimento/peça (m)">
+        </div>
+        <button class="btn ghost" id="addBtn" onclick="saveMaterial()">+ Adicionar material</button>
+        <span class="cancel-link" id="cancelLink" style="display:none" onclick="cancelEdit()">Cancelar edição</span>
+      </div>
+      <p class="hint">Peso = quanto pesa <strong>uma peça</strong> (kg). Comprimento = tamanho de <strong>uma peça</strong> (m), usado no cálculo por metros. A lista fica salva neste navegador.</p>
+      <p class="hint" style="margin-top:4px"><a href="#" onclick="resetMateriais();return false;">Restaurar lista original</a></p>
+    </div>
+  </div>
+</div>
+
+<script>
+  const DEFAULTS_VERSION = 2;
+  const MATERIAIS_PADRAO = [
+    {name:'VIGA U 4" X 40 X 2,00 X 6.000 MM', w:15.696, len:6},
+    {name:'VIGA U 4" X 40 X 2,65 X 6.000 MM', w:21.179, len:6},
+    {name:'VIGA U 68 X 30 X 2,00 X 6000 MM ( ENCAIXE )', w:10.500, len:6},
+    {name:'VIGA U 92 X 30 X 2,00 X 6000 MM ( ENCAIXE )', w:12.857, len:6},
+    {name:'VIGA U ENRIJECIDA 3" X 40 X 2,00 X 6.000 MM', w:14.943, len:6},
+    {name:'VIGA U ENRIJECIDA 3" X 40 X 2,65 X 6.000 MM', w:20.143, len:6},
+    {name:'VIGA U ENRIJECIDA 4" X 40 X 2,00 X 6.000 MM', w:17.643, len:6},
+    {name:'VIGA U ENRIJECIDA 4" X 40 X 2,65 X 6.000 MM', w:23.411, len:6},
+    {name:'VIGA U 3" X 40 X 2,00 X 6.000 MM', w:13.171, len:6},
+    {name:'CH.GROSSA 1/4" X 1.200 X 2.000', w:120.67, len:2},
+    {name:'CH.PRETA FINA QUENTE 3/16" X 1.200 X 6.000', w:276.83, len:6},
+    {name:'CH.PRETA FINA QUENTE 1/8" X 1.200 X 6.000 (n.11)', w:172.5, len:6},
+    {name:'CH.PRETA FINA QUENTE 12 (2,65) X 1.200 X 6.000', w:151.17, len:6},
+    {name:'TELHA TRAPEZOIDAL 0,43MM X 2.000MM', w:7.5, len:2},
+    {name:'TELHA TRAPEZOIDAL 0,43MM X 2.500MM', w:9.3, len:2.5},
+    {name:'TELHA TRAPEZOIDAL 0,43MM X 3.000MM', w:11.2, len:3},
+    {name:'TELHA TRAPEZOIDAL 0,43MM X 3.500MM', w:13, len:3.5},
+    {name:'TELHA TRAPEZOIDAL 0,43MM X 4.000MM', w:14.9, len:4},
+    {name:'TELHA TRAPEZOIDAL 0,43MM X 4.500MM', w:16.8, len:4.5},
+    {name:'TELHA TRAPEZOIDAL 0,43MM X 5.000MM', w:18.6, len:5},
+    {name:'TELHA TRAPEZOIDAL 0,43MM X 5.500MM', w:20.4, len:5.5},
+    {name:'TELHA TRAPEZOIDAL 0,43MM X 6.000MM', w:22.3, len:6},
+    {name:'TELHA TRAPEZOIDAL 0,43MM X 6.500MM', w:24.2, len:6.5},
+    {name:'TELHA TRAPEZOIDAL 0,43MM X 7.000MM', w:26, len:7},
+    {name:'TELHA TRAPEZOIDAL 0,43MM X 7.500MM', w:27.9, len:7.5},
+    {name:'TUBO PATENTE 1" (33,40) X 2,00 X 6.000', w:9.44, len:6},
+    {name:'TUBO PATENTE 1 1/2" (48,30) X 2,00 X 6.000', w:14, len:6},
+    {name:'TUBO PATENTE 2" (60,30) X 2,00 X 6.000', w:17.24, len:6},
+    {name:'TIRA RAIADA GALVANIZADA 0,50 X 6000', w:3.5, len:6},
+    {name:'TIRA RAIADA GALVANIZADA 0,65 X 6000', w:4.75, len:6},
+    {name:'CH.GALVANIZADA #28 (0,43) X 1.200 X 2.000', w:7, len:2},
+    {name:'CH.GALVANIZADA #28 (0,43) X 1.000 X 2.000', w:6.76, len:2},
+    {name:'CH.PRETA FINA FRIO 20 (0,90) X 1.000 X 2.000', w:13.62, len:2},
+    {name:'TUBO PATENTE 1 1/2" (48,30) X 2,65 X 6.000', w:18.38, len:6},
+    {name:'TUBO PATENTE 1" (33,40) X 2,65 X 6.000', w:11.91, len:6},
+    {name:'METALON 40 X 20 X 1,20 X 6.000', w:6.71, len:6},
+    {name:'METALON 40 X 30 X 1,20 X 6.000', w:7.76, len:6},
+    {name:'METALON 25 X 25 X 1,20 X 6.000', w:5.45, len:6},
+    {name:'METALON 15 X 15 X 1,20 X 6.000', w:3.17, len:6},
+    {name:'METALON 20 X 20 X 1,20 X 6.000', w:4.29, len:6},
+  ];
+
+  const STORAGE_KEY = 'conversor_materiais';
+  const VERSION_KEY = 'conversor_versao_padrao';
+
+  let materiais;
+  try{
+    const salvo = localStorage.getItem(STORAGE_KEY);
+    materiais = salvo ? JSON.parse(salvo) : MATERIAIS_PADRAO.slice();
+  }catch(e){ materiais = MATERIAIS_PADRAO.slice(); }
+  materiais.forEach(m => { if(m.len==null) m.len = 6; });
+
+  // Migração: insere produtos padrão novos sem apagar os que você adicionou
+  (function migrar(){
+    let ver = 0;
+    try{ ver = parseInt(localStorage.getItem(VERSION_KEY)) || 0; }catch(e){}
+    if(ver < DEFAULTS_VERSION){
+      const nomes = new Set(materiais.map(m => m.name));
+      MATERIAIS_PADRAO.forEach(p => { if(!nomes.has(p.name)) materiais.push({...p}); });
+      try{ localStorage.setItem(VERSION_KEY, String(DEFAULTS_VERSION)); }catch(e){}
+      salvar();
+    }
+  })();
+
+  let selectedIdx = null, editIdx = null, unit = 'kg';
+
+  function salvar(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(materiais)); }catch(e){} }
+  const fmt = n => n.toLocaleString('pt-BR',{maximumFractionDigits:3});
+
+  function parseNum(str){
+    if(str==null) return NaN;
+    str = String(str).trim().replace(/\s/g,'');
+    if(str==='') return NaN;
+    if(str.includes(',')) str = str.replace(/\./g,'').replace(',','.');
+    return parseFloat(str);
+  }
+
+  function setUnit(u){
+    unit = u;
+    document.querySelectorAll('#units button').forEach(b => b.classList.toggle('on', b.dataset.u===u));
+    document.getElementById('qty').placeholder = u==='kg' ? 'Ex: 1000,5' : u==='t' ? 'Ex: 1,5' : 'Ex: 120';
+    calc();
+  }
+
+  function selectMaterial(i){
+    selectedIdx = i;
+    const m = materiais[i];
+    document.getElementById('selected').innerHTML = `<b>${m.name}</b><br>${fmt(m.w)} kg/peça · ${fmt(m.len)} m/peça`;
+    render(); calc();
+  }
+
+  function render(){
+    const term = (document.getElementById('search').value || '').toLowerCase().trim();
+    const list = document.getElementById('matList');
+    const rows = materiais.map((m,i)=>({m,i})).filter(({m}) => m.name.toLowerCase().includes(term));
+    if(rows.length===0){
+      list.innerHTML = '<p class="hint" style="padding:8px 0">Nenhum material encontrado.</p>';
+    } else {
+      list.innerHTML = rows.map(({m,i})=>`
+        <div class="mat-row ${i===selectedIdx?'sel':''}" onclick="selectMaterial(${i})">
+          <span class="name">${m.name}</span>
+          <span class="meta">${fmt(m.w)} kg<small>${fmt(m.len)} m</small></span>
+          <span class="acts">
+            <button class="edit" title="Editar" onclick="event.stopPropagation();startEdit(${i})">✎</button>
+            <button class="del" title="Remover" onclick="event.stopPropagation();removeMaterial(${i})">×</button>
+          </span>
+        </div>`).join('');
+    }
+    document.getElementById('matCount').textContent = materiais.length + ' itens';
+  }
+
+  function calc(){
+    const box = document.getElementById('result');
+    const qty = parseNum(document.getElementById('qty').value);
+    if(selectedIdx===null || isNaN(qty) || qty<=0){
+      box.className = 'result empty';
+      box.innerHTML = '<div class="big">—</div><div class="sub">Selecione um material e informe a quantidade</div>';
+      return;
+    }
+    const m = materiais[selectedIdx];
+    let exato, divLabel, sobraLabel, inteirasShow, entradaLabel;
+    if(unit==='mts'){
+      exato = qty / m.len;
+      const inteiras = Math.floor(exato);
+      divLabel = fmt(m.len)+' m/peça';
+      sobraLabel = fmt(qty - inteiras*m.len)+' m';
+      inteirasShow = inteiras; entradaLabel = fmt(qty)+' m';
+    } else {
+      const kg = unit==='t' ? qty*1000 : qty;
+      exato = kg / m.w;
+      const inteiras = Math.floor(exato);
+      divLabel = fmt(m.w)+' kg/peça';
+      sobraLabel = fmt(kg - inteiras*m.w)+' kg';
+      inteirasShow = inteiras; entradaLabel = fmt(kg)+' kg' + (unit==='t' ? ' ('+fmt(qty)+' t)' : '');
+    }
+    box.className = 'result';
+    box.innerHTML = `
+      <div class="big">${fmt(exato)} <span>peças</span></div>
+      <div class="sub">${inteirasShow} peça(s) inteira(s) — sobra ${sobraLabel}<br>${entradaLabel} ÷ ${divLabel}</div>`;
+  }
+
+  function saveMaterial(){
+    const name = document.getElementById('fName').value.trim();
+    const w = parseNum(document.getElementById('fWeight').value);
+    const lenRaw = document.getElementById('fLen').value.trim();
+    const len = lenRaw==='' ? 6 : parseNum(lenRaw);
+    if(!name){ alert('Digite o nome do material.'); return; }
+    if(isNaN(w) || w<=0){ alert('Digite um peso por peça válido (kg).'); return; }
+    if(isNaN(len) || len<=0){ alert('Comprimento inválido (m).'); return; }
+    if(editIdx===null){ materiais.push({name, w, len}); }
+    else { materiais[editIdx] = {name, w, len}; }
+    salvar(); cancelEdit(); render();
+    if(selectedIdx!==null) selectMaterial(selectedIdx);
+  }
+
+  function startEdit(i){
+    editIdx = i;
+    const m = materiais[i];
+    document.getElementById('fName').value = m.name;
+    document.getElementById('fWeight').value = String(m.w).replace('.',',');
+    document.getElementById('fLen').value = String(m.len).replace('.',',');
+    document.getElementById('addTitle').textContent = 'Editar material';
+    document.getElementById('addBtn').textContent = 'Salvar alterações';
+    document.getElementById('addBtn').classList.remove('ghost');
+    document.getElementById('cancelLink').style.display = 'inline-block';
+    document.getElementById('addBox').classList.add('editing');
+    document.getElementById('fName').focus();
+    document.getElementById('addBox').scrollIntoView({behavior:'smooth', block:'center'});
+  }
+
+  function cancelEdit(){
+    editIdx = null;
+    document.getElementById('fName').value = '';
+    document.getElementById('fWeight').value = '';
+    document.getElementById('fLen').value = '';
+    document.getElementById('addTitle').textContent = 'Adicionar material';
+    document.getElementById('addBtn').textContent = '+ Adicionar material';
+    document.getElementById('addBtn').classList.add('ghost');
+    document.getElementById('cancelLink').style.display = 'none';
+    document.getElementById('addBox').classList.remove('editing');
+  }
+
+  function removeMaterial(i){
+    if(!confirm('Remover "'+materiais[i].name+'"?')) return;
+    materiais.splice(i,1);
+    if(selectedIdx===i){ selectedIdx=null; document.getElementById('selected').innerHTML='<span class="none">Nenhum — escolha na lista abaixo</span>'; }
+    else if(selectedIdx!==null && i<selectedIdx){ selectedIdx--; }
+    if(editIdx===i) cancelEdit();
+    salvar(); render(); calc();
+  }
+
+  function resetMateriais(){
+    if(!confirm('Restaurar a lista original? Os materiais que você adicionou serão perdidos.')) return;
+    materiais = MATERIAIS_PADRAO.slice();
+    selectedIdx = null;
+    document.getElementById('selected').innerHTML = '<span class="none">Nenhum — escolha na lista abaixo</span>';
+    try{ localStorage.setItem(VERSION_KEY, String(DEFAULTS_VERSION)); }catch(e){}
+    cancelEdit(); salvar(); render(); calc();
+  }
+
+  render();
+</script>
+</body>
+</html>
